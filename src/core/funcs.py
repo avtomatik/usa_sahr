@@ -6,14 +6,13 @@ Created on Mon Jul  3 21:34:51 2023
 @author: green-machine
 """
 
-
 import pandas as pd
+
 from core.classes import Token
 from core.constants import MAP_KWARGS
-from pandas import DataFrame
 
 
-def read(token: Token) -> DataFrame:
+def read(token: Token) -> pd.DataFrame:
     """
     Read Selected Files
 
@@ -24,18 +23,18 @@ def read(token: Token) -> DataFrame:
 
     Returns
     -------
-    DataFrame
+    pd.DataFrame
         DESCRIPTION.
 
     """
     return pd.read_csv(**MAP_KWARGS.get(token))
 
 
-def pull_by_series_id(df: DataFrame, series_id: str) -> DataFrame:
+def pull_by_series_id(df: pd.DataFrame, series_id: str) -> pd.DataFrame:
     """
     Parameters
     ----------
-    df : DataFrame
+    df : pd.DataFrame
         ================== =================================
         df.index           Period
         df.iloc[:, 0]      Series IDs
@@ -44,7 +43,7 @@ def pull_by_series_id(df: DataFrame, series_id: str) -> DataFrame:
     series_id : str
     Returns
     -------
-    DataFrame
+    pd.DataFrame
         ================== =================================
         df.index           Period
         df.iloc[:, 0]      Series
@@ -56,21 +55,26 @@ def pull_by_series_id(df: DataFrame, series_id: str) -> DataFrame:
     )
 
 
-def transform_usa_sahr_infcf(df: DataFrame) -> DataFrame:
+def transform_usa_sahr_infcf(df: pd.DataFrame) -> pd.DataFrame:
     """
     Retrieves Yearly Price Rates from ARCHIVE_NAME_UTILISED
     Returns
     -------
-    DataFrame
+    pd.DataFrame
     """
     # =========================================================================
     # Retrieve First 14 Series
     # =========================================================================
-    return pd.concat(
-        map(
-            lambda _: df.pipe(pull_by_series_id, _).rdiv(1),
-            df.iloc[:, 0].unique()[:14]
-        ),
-        axis=1,
-        sort=True
-    ).pct_change().mul(-1)
+    n_first_series = 14
+    return (
+        pd.concat(
+            map(
+                lambda _: df.pipe(pull_by_series_id, _).rdiv(1),
+                df.iloc[:, 0].unique()[:n_first_series]
+            ),
+            axis=1,
+            sort=True
+        )
+        .pct_change()
+        .mul(-1)
+    )

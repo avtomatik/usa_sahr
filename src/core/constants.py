@@ -6,16 +6,12 @@ Created on Mon Jul  3 22:00:37 2023
 @author: green-machine
 """
 
-from pathlib import Path
-
 from core.classes import Token
-
-ARCHIVE_NAME_UTILISED = 'dataset_usa_infcf16652007.zip'
-
+from core.config import ARCHIVE_NAME_UTILISED, DATA_DIR
 
 MAP_KWARGS = {
     Token.USA_SAHR: {
-        'filepath_or_buffer': Path(__file__).parent.parent.parent.joinpath('data').joinpath(ARCHIVE_NAME_UTILISED),
+        'filepath_or_buffer': DATA_DIR.joinpath(ARCHIVE_NAME_UTILISED),
         'index_col': 1,
         'usecols': range(4, 7)
     }

@@ -11,4 +11,8 @@ from core.classes import Token
 from core.funcs import read, transform_usa_sahr_infcf
 
 if __name__ == '__main__':
-    read(Token.USA_SAHR).pipe(transform_usa_sahr_infcf).plot(grid=True)
+    (
+        read(Token.USA_SAHR)
+        .pipe(transform_usa_sahr_infcf)
+        .plot(grid=True)
+    )
