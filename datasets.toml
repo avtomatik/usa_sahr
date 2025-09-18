@@ -1,0 +1,6 @@
+[USA_SAHR]
+filepath = "./data/dataset_usa_infcf16652007.zip"
+
+[USA_SAHR.kwargs]
+index_col = 1
+usecols = [4, 5, 6]

@@ -7,17 +7,20 @@ Created on Mon Jul  3 21:26:17 2023
 """
 
 from enum import Enum, auto
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import tomllib
 from pydantic import BaseModel, FilePath, field_validator
 
-from .core.config import ARCHIVE_NAME_UTILISED, DATA_DIR
+from .core.config import BASE_DIR
 
 
 class DatasetType(Enum):
     """Supported dataset identifiers."""
     USA_SAHR = auto()
+    # Add more enums as needed
 
 
 class DatasetConfig(BaseModel):
@@ -33,26 +36,31 @@ class DatasetConfig(BaseModel):
         return v
 
 
-# ============================================================================
-# Dataset registry
-# ============================================================================
+def load_registry(config_path: Path) -> dict[DatasetType, DatasetConfig]:
+    """Load dataset registry from a TOML configuration file."""
+    with config_path.open('rb') as f:
+        raw_config = tomllib.load(f)
 
-DATASET_REGISTRY: dict[DatasetType, DatasetConfig] = {
-    DatasetType.USA_SAHR: DatasetConfig(
-        filepath=DATA_DIR / ARCHIVE_NAME_UTILISED,
-        kwargs={
-            'index_col': 1,
-            'usecols': list(range(4, 7)),
-        },
-    ),
-}
+    registry: dict[DatasetType, DatasetConfig] = {}
+    for dataset_name, config in raw_config.items():
+        try:
+            dataset_type = DatasetType[dataset_name]
+        except KeyError as e:
+            raise ValueError(f'Unknown dataset type: {dataset_name}') from e
+
+        registry[dataset_type] = DatasetConfig(**config)
+
+    return registry
 
 
 # ============================================================================
 # API
 # ============================================================================
 
-def load_dataset(dataset_type: DatasetType) -> pd.DataFrame:
+def load_dataset(
+    dataset_type: DatasetType,
+    registry: dict[DatasetType, DatasetConfig]
+) -> pd.DataFrame:
     """
     Load dataset associated with a dataset type.
 
@@ -60,13 +68,15 @@ def load_dataset(dataset_type: DatasetType) -> pd.DataFrame:
     ----------
     dataset_type : DatasetType
         Dataset identifier.
+    registry : dict
+        Dataset registry loaded from TOML.
 
     Returns
     -------
     pd.DataFrame
         Loaded dataset.
     """
-    cfg = DATASET_REGISTRY[dataset_type]
+    cfg = registry[dataset_type]
     return pd.read_csv(cfg.filepath, **cfg.kwargs)
 
 
@@ -121,8 +131,11 @@ def compute_inflation_rates(df: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
+    config_path = BASE_DIR / 'datasets.toml'
+    registry = load_registry(config_path)
+
     (
-        load_dataset(DatasetType.USA_SAHR)
+        load_dataset(DatasetType.USA_SAHR, registry)
         .pipe(compute_inflation_rates)
         .plot(grid=True, title='USA SAHR Inflation-Adjusted Rates')
     )
